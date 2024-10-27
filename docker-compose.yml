@@ -1,0 +1,22 @@
+services:
+  api:
+    container_name: cromalink-api-users
+    hostname: cromalink-api-users
+    image: cromalink-api-users
+    networks:
+      - cromalink
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=cromalink_db
+      - DB_PORT=3306
+      - APP_DEBUG=false
+      - OAUTH_URL=cromalink-api-auth:80
+    ports:
+      - "8001:80"
+
+networks:
+  cromalink:
+    external: true
