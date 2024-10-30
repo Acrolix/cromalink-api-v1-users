@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RefreshTokenRequest;
-use App\Models\UserProfile;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 
 class AuthController extends Controller
@@ -20,32 +19,38 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->only('email', 'password');
+        try {
+            $credentials = $request->only('email', 'password');
 
-        if (!Auth::attempt($credentials))
-            return response()->json(['error' => 'Credenciales inválidas'], 401);
+            $user = User::where('email', $credentials['email'])->first();
 
-        if (!UserProfile::where('user_id', Auth::user()->id)->exists())
-            return response()->json(['error' => 'Perfil Inválido, acceso denegado'], 403);
+            if (!$user->user_profile->exists() || !$user->active)
+                return response()->json(['error' => 'Perfil Inválido, acceso denegado'], 403);
 
-        $response = $this->oAuthToken($credentials);
+            $response = $this->oAuthToken($credentials);
 
-        if ($response->failed())
-            return response()->json(['error' => 'Error de autenticación'], 500);
+            $user->save_last_login();
 
-        Auth::user()->save_last_login();
-        return response()->json($response->json());
+            return response()->json($response);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el Servidor'], 500);
+        }
     }
 
-
-    public function logout(Request $request)
+    /**
+     * Log out the user
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function logout(Request $request): JsonResponse
     {
         $request->user()
             ->tokens
             ->each(function ($token, $key) {
                 $this->revokeAccessAndRefreshTokens($token->id);
             });
-    return response()->json('Logged out successfully', 200);
+        return response()->json('Logged out successfully', 200);
     }
 
 
@@ -58,34 +63,34 @@ class AuthController extends Controller
     public function refreshToken(RefreshTokenRequest $request): JsonResponse
     {
         $response = $this->oAuthRefreshToken($request->refresh_token);
-
-        return response()->json($response->json(), 200);
+        return response()->json($response, 200);
     }
 
     protected function oAuthToken($credentials)
     {
-        return Http::asForm()->post(env('OAUTH_URL') . '/oauth/token', [
+        return Http::asForm()->post(config('app.services.auth_api.url') . '/token', [
             'grant_type' => 'password',
             'client_id' => env('PASSPORT_PASSWORD_CLIENT_ID'),
             'client_secret' => env('PASSPORT_PASSWORD_SECRET'),
             'username' => $credentials['email'],
             'password' => $credentials['password'],
-            'scope' => '',
-        ]);
+            'scope' => ''
+        ])->json();
     }
 
     protected function oAuthRefreshToken($refreshToken)
     {
-        return Http::asForm()->post(env('OAUTH_URL') . '/oauth/token', [
+        return Http::asForm()->post(config('app.services.auth_api.url') . '/token', [
             'grant_type' => 'refresh_token',
             'refresh_token' => $refreshToken,
             'client_id' => env('PASSPORT_PASSWORD_CLIENT_ID'),
             'client_secret' => env('PASSPORT_PASSWORD_SECRET'),
             'scope' => '',
-        ]);
+        ])->json();
     }
 
-    protected function revokeAccessAndRefreshTokens($tokenId) {
+    protected function revokeAccessAndRefreshTokens($tokenId)
+    {
         $tokenRepository = app('Laravel\Passport\TokenRepository');
         $refreshTokenRepository = app('Laravel\Passport\RefreshTokenRepository');
         $tokenRepository->revokeAccessToken($tokenId);
