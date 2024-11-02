@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RefreshTokenRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,6 +36,19 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error en el Servidor'], 500);
         }
+    }
+
+    public function register(RegisterRequest $request): JsonResponse
+    {
+        $userData = [
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'active' => true,
+            'email_verified_at' => now()
+        ];
+        
+        $user = User::create($userData);
+        return response()->json(['message' => 'Register']);
     }
 
     /**

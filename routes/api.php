@@ -13,6 +13,7 @@ Route::middleware('oauth')->get('/hello', function (Request $request) {
 
 Route::group(['prefix' => 'auth'], function () {
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
     Route::middleware('oauth')->post('/logout', [AuthController::class, 'logout']);
     Route::post('/refresh_token', [AuthController::class, 'refreshToken']);
 });
