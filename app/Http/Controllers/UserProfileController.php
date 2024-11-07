@@ -60,7 +60,7 @@ class UserProfileController extends Controller
 
             if ($request->hasFile('avatar')) {
                 $image = ImageHelper::resize($request->file('avatar'));
-                $user->avatar = base64_encode($image->toJpeg(30));
+                $user->avatar = base64_encode($image->toJpeg(80));
             }
 
             $request->first_name && $user->first_name = $request->first_name;
