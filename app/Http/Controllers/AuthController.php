@@ -8,7 +8,9 @@ use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+
+use App\Helpers\AuthHelper;
 
 class AuthController extends Controller
 {
@@ -23,32 +25,64 @@ class AuthController extends Controller
         try {
             $credentials = $request->only('email', 'password');
 
-            $user = User::where('email', $credentials['email'])->first();
+            
+            $user = User::where('email', $credentials['email'])->first() or null;
 
-            if (!$user->user_profile->exists() || !$user->active)
-                return response()->json(['error' => 'Perfil Inválido, acceso denegado'], 403);
+            if (!AuthHelper::checkUserProfile($user)) 
+                return response()->json(['message' => 'Usuario y/o contraseña inválida'], 401);
+        
+            $response = AuthHelper::oAuthToken($credentials);
 
-            $response = $this->oAuthToken($credentials);
+            if (isset($response['error']))
+                return response()->json(['message' => 'Usuario y/o contraseña inválida'], 401);
 
             $user->save_last_login();
 
             return response()->json($response);
         } catch (\Exception $e) {
+        return response()->json(['message' => $e->getMessage()], 500);
             return response()->json(['message' => 'Error en el Servidor'], 500);
         }
     }
 
+    /**
+     * Register a new user
+     *
+     * @param RegisterRequest $request
+     * @return JsonResponse
+     */
     public function register(RegisterRequest $request): JsonResponse
     {
-        $userData = [
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'active' => true,
-            'email_verified_at' => now()
-        ];
-        
-        $user = User::create($userData);
-        return response()->json(['message' => 'Register']);
+        DB::beginTransaction();
+        try {
+            $userData = [
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'active' => true,
+                'email_verified_at' => now()
+            ];
+
+            $userProfileData = [
+                'username' => $request->username,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'birth_date' => $request->birthdate,
+                'country_code' => $request->country,
+            ];
+
+            $user = User::create($userData);
+            if (!$user) throw new \Exception("Error al registrar el usuario");
+
+            if (!$user->user_profile()->create($userProfileData))
+                throw new \Exception("Error al registrar el perfil del usuario");
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Se produjo un error al crear el usuario'], 500);
+        }
+
+        return response()->json(['message' => 'Se Creo el usuario correctamente'], 201);
     }
 
     /**
@@ -62,10 +96,12 @@ class AuthController extends Controller
         $request->user()
             ->tokens
             ->each(function ($token, $key) {
-                $this->revokeAccessAndRefreshTokens($token->id);
+                AuthHelper::revokeAccessAndRefreshTokens($token->id);
             });
-        return response()->json('Logged out successfully', 200);
+        return response()->json('Se cerro la sesión correctamente', 200);
     }
+
+    
 
 
     /**
@@ -76,38 +112,16 @@ class AuthController extends Controller
      */
     public function refreshToken(RefreshTokenRequest $request): JsonResponse
     {
-        $response = $this->oAuthRefreshToken($request->refresh_token);
+        $response = AuthHelper::oAuthRefreshToken($request->refresh_token);
         return response()->json($response, 200);
     }
 
-    protected function oAuthToken($credentials)
+    /**
+     * 
+     * @return JsonResponse
+     */
+    public function verify(): JsonResponse
     {
-        return Http::asForm()->post(config('app.services.auth_api.url') . '/token', [
-            'grant_type' => 'password',
-            'client_id' => env('PASSPORT_PASSWORD_CLIENT_ID'),
-            'client_secret' => env('PASSPORT_PASSWORD_SECRET'),
-            'username' => $credentials['email'],
-            'password' => $credentials['password'],
-            'scope' => ''
-        ])->json();
-    }
-
-    protected function oAuthRefreshToken($refreshToken)
-    {
-        return Http::asForm()->post(config('app.services.auth_api.url') . '/token', [
-            'grant_type' => 'refresh_token',
-            'refresh_token' => $refreshToken,
-            'client_id' => env('PASSPORT_PASSWORD_CLIENT_ID'),
-            'client_secret' => env('PASSPORT_PASSWORD_SECRET'),
-            'scope' => '',
-        ])->json();
-    }
-
-    protected function revokeAccessAndRefreshTokens($tokenId)
-    {
-        $tokenRepository = app('Laravel\Passport\TokenRepository');
-        $refreshTokenRepository = app('Laravel\Passport\RefreshTokenRepository');
-        $tokenRepository->revokeAccessToken($tokenId);
-        $refreshTokenRepository->revokeRefreshTokensByAccessTokenId($tokenId);
+        return response()->json(['message' => 'OK']);
     }
 }

@@ -4,13 +4,14 @@ FROM php:8.2-apache
 # Install Additional System Dependencies
 RUN apt-get update && apt-get install -y \
     libzip-dev \
-    zip
+    zip \
+    libpng-dev
 
 # Enable Apache mod_rewrite for URL rewriting
 RUN a2enmod rewrite
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql zip
+RUN docker-php-ext-install pdo_mysql zip gd
 
 # Configure Apache DocumentRoot to point to Laravel's public directory
 # and update Apache configuration files

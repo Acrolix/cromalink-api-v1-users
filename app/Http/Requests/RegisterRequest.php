@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class RegisterRequest extends FormRequest
@@ -28,7 +28,7 @@ class RegisterRequest extends FormRequest
         return [
             'username' => 'required|string|max:255|unique:user_profile,username',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/',
+            'password' => 'required|string|regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*.?&])[A-Za-z\d@$!%*.?&]{8,}$/',
             'password_confirmation' => 'required_with:password|string|min:8|same:password',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',

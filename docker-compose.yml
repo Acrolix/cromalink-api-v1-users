@@ -13,7 +13,7 @@ services:
       - DB_HOST=cromalink_db
       - DB_PORT=3306
       - APP_DEBUG=false
-      - OAUTH_URL=cromalink-api-auth:80
+      - AUTH_API_URL=cromalink-api-auth:80/api/oauth
     ports:
       - "8001:80"
 

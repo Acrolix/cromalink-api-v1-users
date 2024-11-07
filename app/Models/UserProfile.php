@@ -9,6 +9,7 @@ class UserProfile extends Model
 {
     protected $table = 'user_profile';
     public $timestamps = false;
+    protected $primaryKey = 'user_id';
 
     protected $fillable = [
         'user_id',
@@ -80,5 +81,10 @@ class UserProfile extends Model
     public function resources()
     {
         return $this->hasMany(Resource::class, 'resource_by');
+    }
+
+    public function isActive()
+    {
+        return User::where('id', $this->user_id)->where('active', true)->exists();
     }
 }
