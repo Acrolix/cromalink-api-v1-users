@@ -66,8 +66,8 @@ class AuthController extends Controller
                 'username' => $request->username,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
-                'birth_date' => $request->birthdate,
-                'country_code' => $request->country,
+                'birth_date' => $request->birth_date,
+                'country_code' => $request->country_code,
             ];
 
             $user = User::create($userData);
@@ -79,6 +79,7 @@ class AuthController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            return response()->json(['message' => $e->getMessage()], 500);
             return response()->json(['message' => 'Se produjo un error al crear el usuario'], 500);
         }
 

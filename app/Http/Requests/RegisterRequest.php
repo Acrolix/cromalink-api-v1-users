@@ -32,8 +32,8 @@ class RegisterRequest extends FormRequest
             'password_confirmation' => 'required_with:password|string|min:8|same:password',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'birthdate' => 'required|date',
-            'country' => 'required|string|max:2|exists:country,code',
+            'birth_date' => 'required|date',
+            'country_code' => 'required|string|max:2|exists:country,code',
         ];
     }
     public function messages()
@@ -46,9 +46,10 @@ class RegisterRequest extends FormRequest
             'email.unique' => 'El email ya está en uso!',
             'first_name.required' => 'El nombre es requerido!',
             'last_name.required' => 'El apellido es requerido!',
-            'birthdate.required' => 'La fecha de nacimiento es requerida!',
-            'country.required' => 'El país es requerido!',
-            'country.exists' => 'El país no es válido!',
+            'birth_date.required' => 'La fecha de nacimiento es requerida!',
+            'birth_date.date' => 'La fecha de nacimiento debe ser válida!',
+            'country_code.required' => 'El país es requerido!',
+            'country_code.exists' => 'El país no es válido!',
             'password.required' => 'La contraseña es requerida!',
             'password.min' => 'La contraseña debe tener al menos 8 caracteres!',
             'password.regex' => 'La contraseña debe contener al menos 8 caracteres, una letra mayúscula, una letra minúscula, un número y un carácter especial!',
