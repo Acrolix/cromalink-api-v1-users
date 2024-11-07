@@ -241,7 +241,7 @@ return [
 
     'services' => [
         'auth_api' => [
-            'url' => env('AUTH_API_URL', 'http://localhost:8000/api/oauth'),
+            'url' => env('AUTH_API_URL', 'cromalink-api-auth/api/oauth'),
         ],
     ],
 ];

@@ -32,7 +32,7 @@ class ProfileUpdateRequest extends FormRequest
             'first_name' => 'required|string|max:255',
             'last_name' => 'string|max:255',
             'biography' => 'string|max:255',
-            'avatar' => 'file|required|mimes:jpeg,png,jpg,gif|max:2048', 
+            'avatar' => 'file|required|mimes:jpeg,png,jpg,gif|max:5120', 
         ];
     }
 
@@ -44,7 +44,7 @@ class ProfileUpdateRequest extends FormRequest
     public function messages()
     {
         return [
-            'avatar.max' => 'El avatar debe ser menor a 2048kb!',
+            'avatar.max' => 'El avatar debe ser menor a 5120kb!',
             'avatar.mimes' => 'Solo se aceptan estos tipos de archivo: jpeg, png, jpg, gif!',
         ];
     }
