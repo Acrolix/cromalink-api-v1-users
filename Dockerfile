@@ -5,13 +5,23 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
     libzip-dev \
     zip \
-    libpng-dev
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libmcrypt-dev \
+    libgd-dev \
+    jpegoptim optipng pngquant gifsicle \
+    libonig-dev \
+    libxml2-dev
 
 # Enable Apache mod_rewrite for URL rewriting
 RUN a2enmod rewrite
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql zip gd
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
+RUN docker-php-ext-install pdo_mysql zip bcmath gd
 
 # Configure Apache DocumentRoot to point to Laravel's public directory
 # and update Apache configuration files

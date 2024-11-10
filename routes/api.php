@@ -25,7 +25,7 @@ Route::group(['prefix' => 'users', 'middleware' => 'oauth'], function () {
     Route::get('/', [UserProfileController::class, 'index']);
     Route::get('/me', [UserProfileController::class, 'me']);
     Route::get('/{id}', [UserProfileController::class, 'show']);
-    Route::put('/{id}', [UserProfileController::class, 'update']);
+    Route::put('/', [UserProfileController::class, 'update']);
     Route::put('/{id}/disable', [UserProfileController::class, 'disable']);
     Route::get('/{id}/avatar', [UserProfileController::class, 'avatar']);
     

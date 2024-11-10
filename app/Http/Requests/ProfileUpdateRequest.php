@@ -15,9 +15,6 @@ class ProfileUpdateRequest extends FormRequest
      */
     public function authorize()
     {
-        if ($this->user()->id == $this->route('id')) 
-            return false;
-
         return true;
     }
 
@@ -29,10 +26,10 @@ class ProfileUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name' => 'required|string|max:255',
+            'first_name' => 'string|max:255',
             'last_name' => 'string|max:255',
             'biography' => 'string|max:255',
-            'avatar' => 'file|required|mimes:jpeg,png,jpg,gif|max:5120', 
+            'avatar' => 'image|mimes:jpeg,png,jpg,gif|max:5120', 
         ];
     }
 

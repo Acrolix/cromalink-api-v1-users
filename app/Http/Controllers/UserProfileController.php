@@ -52,10 +52,10 @@ class UserProfileController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ProfileUpdateRequest $request, $id)
+    public function update(ProfileUpdateRequest $request)
     {
         try {
-            $user = UserProfile::find($id);
+            $user = UserProfile::find($request->user()->id);
             if (!$user) return response()->json(['message' => 'No se encontró el usuario'], 404);
 
             if ($request->hasFile('avatar')) {
@@ -71,7 +71,6 @@ class UserProfileController extends Controller
             return response()->json(['message' => 'Perfil actualizado correctamente'], 200);
 
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
             return response()->json(['message' => 'Error al actualizar el perfil del usuario'], 500);
         }
     }
