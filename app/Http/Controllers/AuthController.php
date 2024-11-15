@@ -77,7 +77,7 @@ class AuthController extends Controller
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Se produjo un error al crear el usuario'], 500);
+            return response()->json(['message' => 'Se produjo un error en el servidor'], 500);
         }
 
         return response()->json(['message' => 'Se Creo el usuario correctamente'], 201);

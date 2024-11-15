@@ -21,7 +21,9 @@ class UserProfileController extends Controller
             $users = UserProfile::whereHas('user', function ($query) {
                 $query->where('active', true);
             })->paginate(20);
+
             if (!$users) return response()->json(['message' => 'No se encontraron usuarios'], 404);
+
             return response()->json($users);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error en el Servidor'], 500);

@@ -32,9 +32,24 @@ class UserProfile extends Model
     {
         return "{$this->first_name} {$this->last_name}";
     }
-    
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function isActive()
     {
         return User::where('id', $this->user_id)->where('active', true)->exists();
+    }
+
+    public function getCountryCodeAttribute()
+    {
+            return Country::where('code', $this->attributes['country_code'])->value('name') ?? strtoupper($this->attributes['country_code']);
+    }
+
+    public function getAvatarAttribute($value)
+    {
+        return $value ?: config("app.storage.avatars_path") . 'no-pic.png';
     }
 }

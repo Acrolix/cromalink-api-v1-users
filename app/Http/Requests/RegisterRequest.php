@@ -32,7 +32,7 @@ class RegisterRequest extends FormRequest
             'password_confirmation' => 'required_with:password|string|min:8|same:password',
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'birth_date' => 'required|date',
+            'birth_date' => 'required|date|before:' . now()->subYears(18)->format('Y-m-d'),
             'country_code' => 'required|string|max:2|exists:country,code',
         ];
     }
@@ -48,6 +48,7 @@ class RegisterRequest extends FormRequest
             'last_name.required' => 'El apellido es requerido!',
             'birth_date.required' => 'La fecha de nacimiento es requerida!',
             'birth_date.date' => 'La fecha de nacimiento debe ser válida!',
+            'birth_date.before' => 'Debes ser mayor de 18 años para registrarte!',
             'country_code.required' => 'El país es requerido!',
             'country_code.exists' => 'El país no es válido!',
             'password.required' => 'La contraseña es requerida!',
