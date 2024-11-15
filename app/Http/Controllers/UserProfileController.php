@@ -5,62 +5,74 @@ namespace App\Http\Controllers;
 use App\Helpers\ImageHelper;
 use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\UserProfile;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
 
 class UserProfileController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(): JsonResponse
     {
-        $users = UserProfile::whereHas('user', function ($query) {
-            $query->where('active', true);
-        })->paginate(10);
-        if (!$users) return response()->json(['message' => 'No se encontraron usuarios'], 404);
-        return response()->json($users);
+        try {
+            $users = UserProfile::whereHas('user', function ($query) {
+                $query->where('active', true);
+            })->paginate(20);
+            if (!$users) return response()->json(['message' => 'No se encontraron usuarios'], 404);
+            return response()->json($users);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el Servidor'], 500);
+        }
     }
 
     /**
      * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param $id
+     * @return JsonResponse
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        $user = UserProfile::where('user_id', $id)->whereHas('user', function ($query) {
-            $query->where('active', true);
-        })->first();
-        if (!$user) return response()->json(['message' => 'No se encontró el usuario'], 404);
-        return response()->json($user);
+        try {
+            $user = UserProfile::where('user_id', $id)->whereHas('user', function ($query) {
+                $query->where('active', true);
+            })->first();
+            if (!$user) return response()->json(['message' => 'No se encontró el usuario'], 404);
+            return response()->json($user);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el Servidor'], 500);
+        }
     }
 
-    function me()
+    function me(): JsonResponse
     {
-        $user = UserProfile::find(request()->user()->id);
-        return response()->json($user);
+        try {
+            $user = UserProfile::find(request()->user()->id);
+            if (!$user) return response()->json(['message' => 'No se encontró el usuario'], 404);
+            return response()->json($user);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el Servidor'], 500);
+        }
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the user profile
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param ProfileUpdateRequest $request
+     * @return JsonResponse
      */
-    public function update(ProfileUpdateRequest $request)
+    public function update(ProfileUpdateRequest $request): JsonResponse
     {
+        DB::beginTransaction();
         try {
             $user = UserProfile::find($request->user()->id);
             if (!$user) return response()->json(['message' => 'No se encontró el usuario'], 404);
 
             if ($request->hasFile('avatar')) {
-                $image = ImageHelper::resize($request->file('avatar'));
-                $user->avatar = base64_encode($image->toJpeg(80));
+                $image = ImageHelper::saveAvatar($request->file('avatar'));
+                $user->avatar = $image;
             }
 
             $request->first_name && $user->first_name = $request->first_name;
@@ -68,35 +80,29 @@ class UserProfileController extends Controller
             $request->biography && $user->biography = $request->biography;
 
             $user->save();
+            DB::commit();
             return response()->json(['message' => 'Perfil actualizado correctamente'], 200);
-
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error al actualizar el perfil del usuario'], 500);
+            DB::rollBack();
+            return response()->json(['message' => 'Error en el servidor'], 500);
         }
     }
 
-    public function avatar($id)
-    {
-        $user = UserProfile::find($id);
-        if (!$user) return response()->json(['message' => 'No se encontró el usuario'], 404);
-        $image = "data:image/jpeg;base64," . $user->avatar;
-        return response($image)->withHeaders([
-            'Content-disposition' => 'attachment; filename=' . $user->first_name . '.jpg',
-            'Access-Control-Expose-Headers' => 'Content-Disposition',
-            'Content-Type' => 'image/jpeg',
-          ])->send();
-
-    }
-
-    public function disable($id)
+    /**
+     * Disable the user profile
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function disable(Request $request): JsonResponse
     {
         try {
-            $user = UserProfile::find($id);
+            $user = UserProfile::find($request->user()->id);
             if (!$user) return response()->json(['message' => 'No se encontró el usuario'], 404);
             if (!$user->isActive()) return response()->json(['message' => 'El usuario no está activo'], 403);
 
-            $user->user->active = false;
-            $user->user->save();
+            $user->active = false;
+            $user->save();
 
             return response()->json(['message' => 'Perfil desactivado correctamente'], 200);
         } catch (\Exception $e) {

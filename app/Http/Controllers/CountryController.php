@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Country;
+use Illuminate\Http\JsonResponse;
 
 class CountryController extends Controller
 {
@@ -11,11 +12,15 @@ class CountryController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(): JsonResponse
     {
-        $countries = Country::all();
+        try {
+            $countries = Country::all();
 
-        return response()->json($countries);
+            return response()->json($countries);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el servidor'], 500);
+        }
     }
     /**
      * Display the specified resource.
@@ -23,11 +28,15 @@ class CountryController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        $country = Country::where('code', $id)->first();
-        if (!$country) return response()->json(['message' => 'No se encontró el país'], 404);
+        try {
+            $country = Country::where('code', $id)->first();
+            if (!$country) return response()->json(['message' => 'No se encontró el país'], 404);
 
-        return response()->json(['name' => $country->name]);
+            return response()->json(['name' => $country->name]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el servidor'], 500);
+        }
     }
 }

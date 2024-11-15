@@ -30,7 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
     ];
 
-    public function user_profile()
+    public function profile()
     {
         return $this->hasOne(UserProfile::class, 'user_id');
     }

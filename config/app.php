@@ -241,7 +241,11 @@ return [
 
     'services' => [
         'auth_api' => [
-            'url' => env('AUTH_API_URL', 'cromalink-api-auth/api/oauth'),
+            'url' => env('AUTH_API_URL', '127.0.0.1:8000/api/oauth'),
         ],
     ],
+
+    'storage'=> [
+        'avatars_path' => env('AVATARS_PATH', '/media/avatars/'),
+    ]
 ];

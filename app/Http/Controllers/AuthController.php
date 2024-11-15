@@ -25,12 +25,11 @@ class AuthController extends Controller
         try {
             $credentials = $request->only('email', 'password');
 
-            
             $user = User::where('email', $credentials['email'])->first() or null;
 
-            if (!AuthHelper::checkUserProfile($user)) 
+            if (!AuthHelper::checkUserProfile($user))
                 return response()->json(['message' => 'Usuario y/o contraseña inválida'], 401);
-        
+
             $response = AuthHelper::oAuthToken($credentials);
 
             if (isset($response['error']))
@@ -40,7 +39,6 @@ class AuthController extends Controller
 
             return response()->json($response);
         } catch (\Exception $e) {
-        return response()->json(['message' => $e->getMessage()], 500);
             return response()->json(['message' => 'Error en el Servidor'], 500);
         }
     }
@@ -73,13 +71,12 @@ class AuthController extends Controller
             $user = User::create($userData);
             if (!$user) throw new \Exception("Error al registrar el usuario");
 
-            if (!$user->user_profile()->create($userProfileData))
+            if (!$user->profile()->create($userProfileData))
                 throw new \Exception("Error al registrar el perfil del usuario");
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => $e->getMessage()], 500);
             return response()->json(['message' => 'Se produjo un error al crear el usuario'], 500);
         }
 
@@ -94,15 +91,15 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()
-            ->tokens
-            ->each(function ($token, $key) {
-                AuthHelper::revokeAccessAndRefreshTokens($token->id);
-            });
-        return response()->json('Se cerro la sesión correctamente', 200);
-    }
+        try {
+            $response = AuthHelper::revokeAccessAndRefreshTokens($request);
+            if (!$response || isset($response["error"])) return response()->json(['message' => 'No se cerro la sesion correctamente'], 202);
 
-    
+            return response()->json(['message' => 'Se cerro la sesión correctamente'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el Servidor'], 500);
+        }
+    }
 
 
     /**
@@ -113,12 +110,17 @@ class AuthController extends Controller
      */
     public function refreshToken(RefreshTokenRequest $request): JsonResponse
     {
-        $response = AuthHelper::oAuthRefreshToken($request->refresh_token);
-        return response()->json($response, 200);
+        try {
+            $response = AuthHelper::oAuthRefreshToken($request->refresh_token);
+            return response()->json($response, 200);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error en el Servidor'], 500);
+        }
     }
 
     /**
-     * 
+     * Verify the token
+     *
      * @return JsonResponse
      */
     public function verify(): JsonResponse
