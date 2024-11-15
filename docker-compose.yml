@@ -4,17 +4,18 @@ services:
     hostname: cromalink-api-users
     image: cromalink-api-users
     networks:
-      - cromalink
+      cromalink:
+        ipv4_address: 172.18.0.12
     build:
       context: .
     env_file:
       - .env
     environment:
-      - APP_NAME='Cromalink API'
+      - APP_NAME='Cromalink API Users'
       - DB_HOST=cromalink_db
       - DB_DATABASE=cromalink_db
-      - DB_USERNAME=cromalink_user
-      - DB_PASSWORD=Cr0m4l1nK.
+      - DB_USERNAME=cromalink_users
+      - DB_PASSWORD=password_users
       - DB_PORT=3306
       - APP_DEBUG=false
       - AUTH_API_URL=cromalink-api-auth/api/oauth
@@ -22,3 +23,7 @@ services:
 networks:
   cromalink:
     external: true
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
+          ip_range: 172.18.0.0/20
